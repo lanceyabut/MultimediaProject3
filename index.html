@@ -1,116 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Reef AR Corals</title>
+  <meta charset="UTF-8">
+  <title>Reef AR</title>
 
-  <!-- Google model-viewer library -->
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #02101f;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header {
-      padding: 1rem;
-      text-align: center;
-    }
-    .viewer-container {
-      width: 100%;
-      max-width: 480px;
-      padding: 0 1rem 1.5rem;
-    }
-    model-viewer {
-      width: 100%;
-      height: 420px;
-      background: radial-gradient(circle at top, #043b5c, #01070f);
-      border-radius: 18px;
-      overflow: hidden;
-    }
-    .buttons {
-      display: flex;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-top: 0.75rem;
-    }
-    button {
-      padding: 0.6rem 1.1rem;
-      border-radius: 999px;
-      border: none;
-      background: #1fb6ff;
-      color: #02101f;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button.secondary {
-      background: #ff9f43;
-    }
+    body { background:#00121f; color:white; text-align:center; font-family:sans-serif; }
+    model-viewer { width:100%; height:400px; margin-top:20px; }
+    button { padding:10px 20px; border:none; border-radius:20px; margin:10px; font-weight:bold; }
   </style>
 </head>
+
 <body>
-  <header>
-    <h1>ReefRevive AR</h1>
-    <p>Tap “View in AR” to place corals on a real surface.</p>
-  </header>
+  <h2>ReefRevive AR</h2>
 
-  <div class="viewer-container">
-    <!-- Coral Model 1 -->
-    <model-viewer id="coral1"
-      src="acropora_valenciennesi.glb"
-      ios-src="coral1.usdz" 
-      alt="Healthy coral cluster"
-      ar
-      ar-modes="webxr scene-viewer quick-look"
-      camera-controls
-      auto-rotate
-      exposure="1.1"
-      environment-image="https://modelviewer.dev/shared-assets/environments/underwater.hdr">
-      
-      <div class="buttons" slot="ar-button">
-        <button>View Coral 1 in AR</button>
-      </div>
-    </model-viewer>
-
-    <div class="buttons">
-      <button onclick="showCoral(1)">Show Coral 1</button>
-      <button class="secondary" onclick="showCoral(2)">Show Coral 2</button>
-    </div>
-  </div>
-
-  <!-- Coral Model 2 (hidden by default, same viewer area) -->
-  <model-viewer id="coral2"
-    style="display:none"
+  <!-- Coral 1 -->
+  <model-viewer id="coral1"
     src="pocillopora_verrucosa.glb"
-    ios-src="coral2.usdz"
-    alt="Branching coral formation"
+    ios-src="coral1.usdz"
+    alt="Coral Model 1"
     ar
     ar-modes="webxr scene-viewer quick-look"
     camera-controls
     auto-rotate
-    exposure="1.1"
     environment-image="https://modelviewer.dev/shared-assets/environments/underwater.hdr">
-    
-    <div class="buttons" slot="ar-button">
-      <button>View Coral 2 in AR</button>
-    </div>
   </model-viewer>
+
+  <!-- Coral 2 -->
+  <model-viewer id="coral2" style="display:none"
+    src="acropora_valenciennesi.glb"
+    ios-src="coral2.usdz"
+    alt="Coral Model 2"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    camera-controls
+    auto-rotate
+    environment-image="https://modelviewer.dev/shared-assets/environments/underwater.hdr">
+  </model-viewer>
+
+  <button onclick="showCoral(1)">Show Coral 1</button>
+  <button onclick="showCoral(2)">Show Coral 2</button>
 
   <script>
     function showCoral(id) {
-      const c1 = document.getElementById('coral1');
-      const c2 = document.getElementById('coral2');
-      if (id === 1) {
-        c1.style.display = 'block';
-        c2.style.display = 'none';
-      } else {
-        c1.style.display = 'none';
-        c2.style.display = 'block';
-      }
+      document.getElementById('coral1').style.display = id === 1 ? 'block' : 'none';
+      document.getElementById('coral2').style.display = id === 2 ? 'block' : 'none';
     }
   </script>
 </body>
