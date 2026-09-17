@@ -1,53 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Reef AR</title>
-
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <title>ReefRevive Surface AR</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/ARButton.js"></script>
 
   <style>
-    body { background:#00121f; color:white; text-align:center; font-family:sans-serif; }
-    model-viewer { width:100%; height:400px; margin-top:20px; }
-    button { padding:10px 20px; border:none; border-radius:20px; margin:10px; font-weight:bold; }
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #ui {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 18px;
+      border-radius: 20px;
+      border: none;
+      background: #1fb6ff;
+      font-weight: bold;
+      color: #00263b;
+    }
   </style>
 </head>
 
 <body>
-  <h2>ReefRevive AR</h2>
-
-  <!-- Coral 1 -->
-  <model-viewer id="coral1"
-    src="pocillopora_verrucosa.glb"
-    ios-src="coral1.usdz"
-    alt="Coral Model 1"
-    ar
-    ar-modes="webxr scene-viewer quick-look"
-    camera-controls
-    auto-rotate
-    environment-image="https://modelviewer.dev/shared-assets/environments/underwater.hdr">
-  </model-viewer>
-
-  <!-- Coral 2 -->
-  <model-viewer id="coral2" style="display:none"
-    src="acropora_valenciennesi.glb"
-    ios-src="coral2.usdz"
-    alt="Coral Model 2"
-    ar
-    ar-modes="webxr scene-viewer quick-look"
-    camera-controls
-    auto-rotate
-    environment-image="https://modelviewer.dev/shared-assets/environments/underwater.hdr">
-  </model-viewer>
-
-  <button onclick="showCoral(1)">Show Coral 1</button>
-  <button onclick="showCoral(2)">Show Coral 2</button>
+  <div id="ui">
+    <button onclick="placeCoral(1)">Place Coral 1</button>
+    <button onclick="placeCoral(2)">Place Coral 2</button>
+  </div>
 
   <script>
-    function showCoral(id) {
-      document.getElementById('coral1').style.display = id === 1 ? 'block' : 'none';
-      document.getElementById('coral2').style.display = id === 2 ? 'block' : 'none';
+    let camera, scene, renderer, controller;
+    let hitTestSource = null;
+    let hitTestSourceRequested = false;
+
+    init();
+    animate();
+
+    function init() {
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+      document.body.appendChild(renderer.domElement);
+
+      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+
+      controller = renderer.xr.getController(0);
+      scene.add(controller);
+    }
+
+    function placeCoral(type) {
+      const loader = new THREE.GLTFLoader();
+
+      const modelPath = type === 1 ? "acropora_valenciennesi.glb" : "pocillopora_verrucosa.glb";
+
+      loader.load(modelPath, gltf => {
+        const coral = gltf.scene;
+        coral.scale.set(0.3, 0.3, 0.3);
+        coral.position.copy(controller.position);
+        coral.position.y -= 0.1; // sit on surface
+        scene.add(coral);
+      });
+    }
+
+    function animate() {
+      renderer.setAnimationLoop(render);
+    }
+
+    function render(timestamp, frame) {
+      if (frame) {
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
+
+        if (!hitTestSourceRequested) {
+          session.requestReferenceSpace('viewer').then(space => {
+            session.requestHitTestSource({ space }).then(source => {
+              hitTestSource = source;
+            });
+          });
+
+          session.addEventListener('end', () => {
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+          });
+
+          hitTestSourceRequested = true;
+        }
+
+        if (hitTestSource) {
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+          if (hitTestResults.length) {
+            const hit = hitTestResults[0];
+            const pose = hit.getPose(referenceSpace);
+
+            controller.position.set(
+              pose.transform.position.x,
+              pose.transform.position.y,
+              pose.transform.position.z
+            );
+          }
+        }
+      }
+
+      renderer.render(scene, camera);
     }
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/loaders/GLTFLoader.js"></script>
 </body>
 </html>
